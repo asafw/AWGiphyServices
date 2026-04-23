@@ -89,7 +89,7 @@ public final class AWGiphyService: AWGiphyPhotosProtocol {
 
 ## Test counts
 
-- Unit tests: 40 (across 8 suites)
+- Unit tests: 41 (across 8 suites)
 - Integration tests: 9 (skipped when GIPHY_API_KEY absent or CI env set)
 
 ### Unit test suites
@@ -101,7 +101,7 @@ public final class AWGiphyService: AWGiphyPhotosProtocol {
 | `AWGiphyPaginationTests` | 1 |
 | `AWGiphySearchRequestTests` | 2 |
 | `AWGiphyTrendingRequestTests` | 1 |
-| `GiphyAPIServiceTests` | 13 |
+| `GiphyAPIServiceTests` | 14 |
 | `AWGiphyPhotosProtocolTests` | 2 |
 | `AWGiphyServiceTests` | 3 |
 | `AWGiphyAPIErrorTests` | 4 |
@@ -129,4 +129,6 @@ xcodebuild -scheme AWGiphyServices-Package -destination "platform=macOS" test
 
 | Hash | Message |
 |---|---|
+| 26b28ec | fix: catch URLError as networkError; fix networkError doc comment; improve tests |
+| 19c65c4 | docs(context): update session state |
 | 5d4b1bb | feat: initial AWGiphyServices package |
