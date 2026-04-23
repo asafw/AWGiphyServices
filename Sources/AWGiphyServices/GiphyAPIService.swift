@@ -63,6 +63,8 @@ struct GiphyAPIService: Sendable {
 
     // MARK: - Private helpers
 
+    private static let decoder = JSONDecoder()
+
     private func performRequest<T: Decodable>(url: URL) async throws -> T {
         let request = URLRequest(url: url)
         let (data, response): (Data, URLResponse)
@@ -73,7 +75,7 @@ struct GiphyAPIService: Sendable {
         }
         try validateHTTPResponse(response)
         do {
-            return try JSONDecoder().decode(T.self, from: data)
+            return try GiphyAPIService.decoder.decode(T.self, from: data)
         } catch {
             throw AWGiphyAPIError.parsingError
         }

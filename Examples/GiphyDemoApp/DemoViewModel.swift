@@ -65,7 +65,7 @@ import AWGiphyServices
                 gifs = fetched
                 totalCount = pagination.totalCount ?? 0
             } catch {
-                errorMessage = errorDescription(error)
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -91,7 +91,7 @@ import AWGiphyServices
                 totalCount = pagination.totalCount ?? 0
                 currentOffset = fetched.count
             } catch {
-                errorMessage = errorDescription(error)
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -100,6 +100,7 @@ import AWGiphyServices
     func loadNextPage() {
         guard !isLoading, hasMorePages, !showTrending else { return }
         isLoading = true
+        errorMessage = nil
         Task {
             do {
                 let (fetched, pagination) = try await searchGIFs(
@@ -110,7 +111,7 @@ import AWGiphyServices
                 totalCount = pagination.totalCount ?? 0
                 currentOffset += fetched.count
             } catch {
-                errorMessage = errorDescription(error)
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -118,25 +119,6 @@ import AWGiphyServices
 
     func selectGIF(_ gif: AWGiphyGIF) {
         selectedGIF = gif
-    }
-
-    // MARK: - Error formatting
-
-    private func errorDescription(_ error: Error) -> String {
-        switch error {
-        case AWGiphyAPIError.networkError:
-            return "No network connection. Check your internet and try again."
-        case AWGiphyAPIError.parsingError:
-            return "Unexpected response from Giphy. Please try again."
-        case AWGiphyAPIError.apiError(let code, let message):
-            switch code {
-            case 403: return "Invalid API key (403). Check your key and try again."
-            case 429: return "Rate limit exceeded (429). Please wait and try again."
-            default:  return "Giphy error \(code): \(message)"
-            }
-        default:
-            return error.localizedDescription
-        }
     }
 
     // MARK: - Mock data

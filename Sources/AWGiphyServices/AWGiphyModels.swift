@@ -104,6 +104,11 @@ public struct AWGiphyRendition: Decodable, Hashable, Sendable {
     /// Height in pixels (as a string per the Giphy API schema).
     public let height: String?
 
+    /// Parsed width as an integer. `nil` when the field is absent or non-numeric.
+    public var widthInt: Int? { width.flatMap(Int.init) }
+    /// Parsed height as an integer. `nil` when the field is absent or non-numeric.
+    public var heightInt: Int? { height.flatMap(Int.init) }
+
     private enum CodingKeys: String, CodingKey {
         case url, mp4, webp, width, height
     }

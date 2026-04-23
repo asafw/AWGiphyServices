@@ -8,23 +8,40 @@ import XCTest
 /// A URLProtocol subclass that intercepts all requests and returns stubbed data.
 /// Register it on an ephemeral URLSession and inject that session via `urlSession`.
 final class CapturingURLProtocol: URLProtocol {
-    static var stubbedData: Data = Data()
-    static var stubbedStatusCode: Int = 200
-    static var lastRequest: URLRequest?
+    private static let lock = NSLock()
+    private static var _stubbedData: Data = Data()
+    private static var _stubbedStatusCode: Int = 200
+    private static var _lastRequest: URLRequest?
+
+    static var stubbedData: Data {
+        get { lock.withLock { _stubbedData } }
+        set { lock.withLock { _stubbedData = newValue } }
+    }
+    static var stubbedStatusCode: Int {
+        get { lock.withLock { _stubbedStatusCode } }
+        set { lock.withLock { _stubbedStatusCode = newValue } }
+    }
+    static var lastRequest: URLRequest? {
+        get { lock.withLock { _lastRequest } }
+        set { lock.withLock { _lastRequest = newValue } }
+    }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
         CapturingURLProtocol.lastRequest = request
+        let (data, statusCode) = CapturingURLProtocol.lock.withLock {
+            (CapturingURLProtocol._stubbedData, CapturingURLProtocol._stubbedStatusCode)
+        }
         let response = HTTPURLResponse(
             url: request.url!,
-            statusCode: CapturingURLProtocol.stubbedStatusCode,
+            statusCode: statusCode,
             httpVersion: nil,
             headerFields: nil
         )!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: CapturingURLProtocol.stubbedData)
+        client?.urlProtocol(self, didLoad: data)
         client?.urlProtocolDidFinishLoading(self)
     }
 
@@ -150,6 +167,24 @@ final class AWGiphyGIFTests: XCTestCase {
         // AWGiphyGIF.id is the Identifiable identifier
         let gifs = [gif!]
         XCTAssertEqual(gifs.first(where: { $0.id == "abc123" })?.title, "Funny Cat")
+    }
+
+    func testWidthIntParsed() {
+        XCTAssertEqual(gif.images.fixedHeight.widthInt, 267)
+    }
+
+    func testHeightIntParsed() {
+        XCTAssertEqual(gif.images.fixedHeight.heightInt, 200)
+    }
+
+    func testWidthIntNilWhenFieldIsNil() throws {
+        // Build a rendition with nil width/height to exercise the nil path
+        let json = """
+        {"url":null,"mp4":null,"webp":null,"width":null,"height":null}
+        """
+        let rendition = try JSONDecoder().decode(AWGiphyRendition.self, from: json.data(using: .utf8)!)
+        XCTAssertNil(rendition.widthInt)
+        XCTAssertNil(rendition.heightInt)
     }
 }
 
@@ -410,5 +445,30 @@ final class AWGiphyAPIErrorTests: XCTestCase {
     func testAPIErrorDifferentCodeNotEqual() {
         XCTAssertNotEqual(AWGiphyAPIError.apiError(code: 404, message: "Not Found"),
                           AWGiphyAPIError.apiError(code: 500, message: "Not Found"))
+    }
+
+    func testNetworkErrorLocalizedDescription() {
+        let error = AWGiphyAPIError.networkError
+        XCTAssertEqual(error.errorDescription, "No network connection. Check your internet and try again.")
+    }
+
+    func testParsingErrorLocalizedDescription() {
+        let error = AWGiphyAPIError.parsingError
+        XCTAssertEqual(error.errorDescription, "Unexpected response from Giphy. Please try again.")
+    }
+
+    func testAPIError403LocalizedDescription() {
+        let error = AWGiphyAPIError.apiError(code: 403, message: "Forbidden")
+        XCTAssertEqual(error.errorDescription, "Invalid API key (403). Check your key and try again.")
+    }
+
+    func testAPIError429LocalizedDescription() {
+        let error = AWGiphyAPIError.apiError(code: 429, message: "Too Many Requests")
+        XCTAssertEqual(error.errorDescription, "Rate limit exceeded (429). Please wait and try again.")
+    }
+
+    func testAPIErrorGenericLocalizedDescription() {
+        let error = AWGiphyAPIError.apiError(code: 500, message: "Internal Server Error")
+        XCTAssertEqual(error.errorDescription, "Giphy error 500: Internal Server Error")
     }
 }
