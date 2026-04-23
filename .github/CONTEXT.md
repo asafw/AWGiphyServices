@@ -129,4 +129,4 @@ xcodebuild -scheme AWGiphyServices-Package -destination "platform=macOS" test
 
 | Hash | Message |
 |---|---|
-| (initial) | feat: initial AWGiphyServices package |
+| 5d4b1bb | feat: initial AWGiphyServices package |
