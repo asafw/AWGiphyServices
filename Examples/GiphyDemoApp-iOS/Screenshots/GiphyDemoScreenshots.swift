@@ -2,12 +2,17 @@ import XCTest
 
 final class GiphyDemoScreenshots: XCTestCase {
 
+    private let apiKey = "nxQrYdLrix5EyywZom3K9BrITqiY7XXd"
+    private let searchTerm = "cat"
+
     let app = XCUIApplication()
 
     override func setUpWithError() throws {
         continueAfterFailure = false
         // Disable animations so the UI settles instantly.
         app.launchArguments += ["-UIAnimationDragCoefficient", "0"]
+        // Inject live API key so DemoViewModel reads it from ProcessInfo.environment.
+        app.launchEnvironment["GIPHY_API_KEY"] = apiKey
     }
 
     // MARK: - Helpers
@@ -21,37 +26,58 @@ final class GiphyDemoScreenshots: XCTestCase {
         print("📸 \(name)")
     }
 
+    /// Type into the search field, tap Search, and dismiss the keyboard.
+    private func searchFor(_ term: String) {
+        let searchField = app.textFields["search_field"]
+        XCTAssert(searchField.waitForExistence(timeout: 5))
+        searchField.tap()
+        searchField.typeText(term)
+        app.buttons["search_button"].tap()
+        // Dismiss keyboard so it doesn't appear in the screenshot.
+        if app.keyboards.firstMatch.exists {
+            app.tap()
+        }
+    }
+
     // MARK: - Screenshots
 
-    /// Capture the empty state (no API key configured).
-    func testEmptyState() throws {
+    /// Capture the trending GIF grid that loads automatically on launch.
+    func testTrendingGrid() throws {
         app.launch()
         _ = app.navigationBars["Giphy Demo"].waitForExistence(timeout: 5)
-        save("ios_empty_state")
+        // Trending loads automatically — wait up to 30s for the first cell.
+        let firstCell = app.buttons.matching(identifier: "gif_cell").firstMatch
+        let appeared = firstCell.waitForExistence(timeout: 30)
+        if appeared { sleep(8) } // let thumbnails download
+        save("ios_trending_grid")
+        XCTAssert(appeared, "Trending GIF cells did not appear")
     }
 
-    /// Capture the GIF grid populated by MOCK_GIFS (no network needed).
-    func testGIFGrid() throws {
-        app.launchEnvironment["MOCK_GIFS"] = "1"
+    /// Search for "\(searchTerm)" and capture the results grid.
+    func testSearchResults() throws {
         app.launch()
         _ = app.navigationBars["Giphy Demo"].waitForExistence(timeout: 5)
-
-        let firstCell = app.scrollViews.firstMatch.buttons.firstMatch
-        XCTAssert(firstCell.waitForExistence(timeout: 5), "Mock GIF cells did not appear")
-        sleep(2)
-        save("ios_gif_grid")
+        searchFor(searchTerm)
+        let firstCell = app.buttons.matching(identifier: "gif_cell").firstMatch
+        let appeared = firstCell.waitForExistence(timeout: 30)
+        if appeared { sleep(8) } // let thumbnails download
+        save("ios_search_results")
+        XCTAssert(appeared, "Search result cells did not appear")
     }
 
-    /// Capture the GIF detail sheet by tapping the first mock cell.
+    /// Open the detail sheet for the first search result.
     func testGIFDetail() throws {
-        app.launchEnvironment["MOCK_GIFS"] = "1"
         app.launch()
         _ = app.navigationBars["Giphy Demo"].waitForExistence(timeout: 5)
-
-        let firstCell = app.scrollViews.firstMatch.buttons.firstMatch
-        XCTAssert(firstCell.waitForExistence(timeout: 5), "Mock GIF cells did not appear")
-        firstCell.tap()
-        sleep(2)
+        searchFor(searchTerm)
+        let firstCell = app.buttons.matching(identifier: "gif_cell").firstMatch
+        let appeared = firstCell.waitForExistence(timeout: 30)
+        if appeared {
+            sleep(8) // let thumbnails download
+            firstCell.tap()
+            sleep(10) // let original GIF download
+        }
         save("ios_gif_detail")
+        XCTAssert(appeared, "Search result cells did not appear")
     }
 }

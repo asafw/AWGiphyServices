@@ -39,6 +39,9 @@ import AWGiphyServices
         let env = ProcessInfo.processInfo.environment
         if env["MOCK_GIFS"] != nil {
             gifs = DemoViewModel.mockGIFs
+        } else if let term = env["AUTO_SEARCH"], !term.isEmpty {
+            searchText = term
+            showTrending = false
         }
         #endif
     }

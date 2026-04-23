@@ -6,6 +6,7 @@ import AWGiphyServices
 struct ContentView: View {
 
     @State private var viewModel = DemoViewModel()
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -19,7 +20,11 @@ struct ContentView: View {
             .navigationTitle("Giphy Demo")
             .onAppear {
                 if viewModel.gifs.isEmpty {
-                    viewModel.loadTrending()
+                    if viewModel.showTrending {
+                        viewModel.loadTrending()
+                    } else {
+                        viewModel.search()
+                    }
                 }
             }
         }
@@ -54,9 +59,16 @@ struct ContentView: View {
             TextField("Search GIFs…", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("search_field")
-                .onSubmit { viewModel.search() }
+                .focused($searchFocused)
+                .onSubmit {
+                    searchFocused = false
+                    viewModel.search()
+                }
 
-            Button("Search") { viewModel.search() }
+            Button("Search") {
+                searchFocused = false
+                viewModel.search()
+            }
                 .accessibilityIdentifier("search_button")
                 .disabled(viewModel.searchText.isEmpty || viewModel.isLoading)
 

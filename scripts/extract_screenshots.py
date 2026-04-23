@@ -56,7 +56,8 @@ for meta in metas:
         if not os.path.exists(src):
             continue
         # Skip XCTest-internal attachments.
-        if name.startswith('kXCTAttachment') or name.startswith('App UI hierarchy'):
+        if name.startswith('kXCTAttachment') or name.startswith('App UI hierarchy') \
+                or name.startswith('Debug description'):
             continue
         fname = name if name.endswith('.png') else name + '.png'
         shutil.copy2(src, os.path.join(OUT, fname))

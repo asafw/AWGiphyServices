@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
 # macos_screenshots.sh — Build and screenshot the macOS GiphyDemoApp.
 #
-# 1. Launch with MOCK_GIFS → screenshot grid state
+# 1. Launch with AUTO_SEARCH=cat → wait for results → screenshot grid
 # 2. Click first GIF cell → wait → screenshot detail sheet
 #
 # Usage (from repo root):
-#   bash scripts/macos_screenshots.sh
+#   GIPHY_API_KEY=your_key bash scripts/macos_screenshots.sh
 
 set -euo pipefail
 
@@ -14,6 +14,10 @@ OUT="$REPO/screenshots/macos"
 APP="$REPO/.build/debug/GiphyDemoApp"
 
 mkdir -p "$OUT"
+
+KEY="${GIPHY_API_KEY:-}"
+[[ -z "$KEY" && -f /tmp/GIPHY_API_KEY ]] && KEY="$(cat /tmp/GIPHY_API_KEY | tr -d '[:space:]')"
+[[ -z "$KEY" ]] && { echo "Error: set GIPHY_API_KEY or write key to /tmp/GIPHY_API_KEY"; exit 1; }
 
 echo "▶ Building…"
 cd "$REPO"
@@ -32,13 +36,13 @@ screenshot() {
   echo "📸 ${name}.png  (${WW}x${WH})"
 }
 
-# 1. GIF grid (populated by MOCK_GIFS — no network needed)
-echo "▶ Launching (MOCK_GIFS)…"
-MOCK_GIFS=1 "$APP" &
+# 1. Search results — AUTO_SEARCH triggers viewModel.search() on appear
+echo "▶ Launching (AUTO_SEARCH=cat)…"
+GIPHY_API_KEY="$KEY" AUTO_SEARCH=cat "$APP" &
 APP_PID=$!
 trap 'kill $APP_PID 2>/dev/null; true' EXIT
-sleep 5
-screenshot "macos_gif_grid"
+sleep 15  # wait for search results + thumbnail downloads
+screenshot "macos_search_results"
 
 # 2. Click first GIF cell (approximate centre of first thumbnail)
 bounds=$(get_bounds)
@@ -47,7 +51,7 @@ CLICK_X=$((WX + 80))
 CLICK_Y=$((WY + 200))
 echo "▶ Clicking first GIF cell at ($CLICK_X, $CLICK_Y)…"
 cliclick c:${CLICK_X},${CLICK_Y}
-sleep 3
+sleep 10  # wait for original GIF download
 screenshot "macos_gif_detail"
 
 echo "▶ Done."

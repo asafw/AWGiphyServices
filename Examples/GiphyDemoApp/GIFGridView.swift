@@ -14,6 +14,7 @@ struct GIFGridView: View {
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(viewModel.gifs) { gif in
                     GIFThumbnailView(gif: gif, viewModel: viewModel)
+                        .accessibilityIdentifier("gif_cell")
                         .onAppear {
                             if gif.id == viewModel.gifs.last?.id {
                                 viewModel.loadNextPage()

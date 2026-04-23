@@ -111,15 +111,15 @@ A demo app under `Examples/` exercises all four `AWGiphyPhotosProtocol` methods.
 
 #### iOS
 
-| Empty state | GIF grid | GIF detail |
-|:-----------:|:---------:|:----------:|
-| <img src="screenshots/ios/ios_empty_state.png" width="220"> | <img src="screenshots/ios/ios_gif_grid.png" width="220"> | <img src="screenshots/ios/ios_gif_detail.png" width="220"> |
+| Trending | Search results | GIF detail |
+|:--------:|:--------------:|:----------:|
+| <img src="screenshots/ios/ios_trending_grid.png" width="220"> | <img src="screenshots/ios/ios_search_results.png" width="220"> | <img src="screenshots/ios/ios_gif_detail.png" width="220"> |
 
 #### macOS
 
-| GIF grid | GIF detail |
-|:--------:|:----------:|
-| <img src="screenshots/macos/macos_gif_grid.png" width="340"> | <img src="screenshots/macos/macos_gif_detail.png" width="340"> |
+| Search results | GIF detail |
+|:--------------:|:----------:|
+| <img src="screenshots/macos/macos_search_results.png" width="340"> | <img src="screenshots/macos/macos_gif_detail.png" width="340"> |
 
 ### Running on macOS
 
