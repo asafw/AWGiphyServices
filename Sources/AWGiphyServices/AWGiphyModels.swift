@@ -21,6 +21,19 @@ public struct AWGiphySearchRequest: Sendable {
     }
 }
 
+/// Parameters for a random GIF request.
+public struct AWGiphyRandomRequest: Sendable {
+    /// Optional tag to filter the random GIF by topic.
+    public let tag: String?
+    /// Content rating filter. Acceptable values: "g", "pg", "pg-13", "r".
+    public let rating: String?
+
+    public init(tag: String? = nil, rating: String? = nil) {
+        self.tag = tag
+        self.rating = rating
+    }
+}
+
 /// Parameters for a trending GIFs request.
 public struct AWGiphyTrendingRequest: Sendable {
     /// The maximum number of results to return. Default: 25.
@@ -55,9 +68,22 @@ public struct AWGiphyGIF: Decodable, Hashable, Identifiable, Sendable {
     public let username: String
     /// Available renditions for this GIF.
     public let images: AWGiphyImages
+    /// ISO 8601 datetime string when the GIF was imported into Giphy.
+    public let importDatetime: String?
+    /// ISO 8601 datetime string when the GIF was created.
+    public let createDatetime: String?
 
     private enum CodingKeys: String, CodingKey {
         case id, title, slug, url, rating, username, images
+        case importDatetime  = "import_datetime"
+        case createDatetime  = "create_datetime"
+    }
+}
+
+extension AWGiphyGIF: CustomStringConvertible {
+    /// A human-readable summary of the GIF, suitable for debugging.
+    public var description: String {
+        "AWGiphyGIF(id: \(id), title: \"\(title)\", rating: \(rating))"
     }
 }
 
@@ -71,6 +97,8 @@ public struct AWGiphyImages: Decodable, Hashable, Sendable {
     public let fixedHeightStill: AWGiphyRendition
     /// 100px tall small rendition. Good for keyboards.
     public let fixedHeightSmall: AWGiphyRendition
+    /// Small looping preview rendition. Good for hover previews.
+    public let preview: AWGiphyRendition?
     /// 200px wide rendition.
     public let fixedWidth: AWGiphyRendition
     /// 200px wide still (first frame only).
@@ -84,6 +112,7 @@ public struct AWGiphyImages: Decodable, Hashable, Sendable {
         case fixedHeight        = "fixed_height"
         case fixedHeightStill   = "fixed_height_still"
         case fixedHeightSmall   = "fixed_height_small"
+        case preview
         case fixedWidth         = "fixed_width"
         case fixedWidthStill    = "fixed_width_still"
         case original
@@ -129,6 +158,29 @@ public struct AWGiphyPagination: Decodable, Sendable {
     }
 }
 
+/// A random GIF returned by the Giphy random endpoint.
+/// The schema differs from `AWGiphyGIF` — `images` is absent; only direct URL fields are present.
+public struct AWGiphyRandomGIF: Decodable, Hashable, Sendable {
+    /// The GIF's unique ID.
+    public let id: String
+    /// The title of the GIF on giphy.com.
+    public let title: String
+    /// The content rating (g, pg, pg-13, r).
+    public let rating: String
+    /// Username of the uploader, if any.
+    public let username: String
+    /// Direct URL to the original GIF file.
+    public let imageUrl: String?
+    /// Direct URL to the original MP4 file.
+    public let imageOriginalUrl: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, rating, username
+        case imageUrl         = "image_url"
+        case imageOriginalUrl = "image_original_url"
+    }
+}
+
 // MARK: - Internal envelope types
 
 struct GiphyListEnvelope: Decodable {
@@ -138,4 +190,12 @@ struct GiphyListEnvelope: Decodable {
 
 struct GiphySingleEnvelope: Decodable {
     let data: AWGiphyGIF
+}
+
+struct GiphyMultiEnvelope: Decodable {
+    let data: [AWGiphyGIF]
+}
+
+struct GiphyRandomEnvelope: Decodable {
+    let data: AWGiphyRandomGIF
 }

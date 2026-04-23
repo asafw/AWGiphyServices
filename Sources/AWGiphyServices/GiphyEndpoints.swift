@@ -6,4 +6,5 @@ enum GiphyEndpoints {
     static let baseURL = "https://api.giphy.com/v1/gifs"
     static let searchPath = "/search"
     static let trendingPath = "/trending"
+    static let randomPath = "/random"
 }

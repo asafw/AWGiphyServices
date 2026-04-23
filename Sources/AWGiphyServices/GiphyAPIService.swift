@@ -48,6 +48,24 @@ struct GiphyAPIService: Sendable {
         return envelope.data
     }
 
+    func getGIFs(apiKey: String, ids: [String]) async throws -> [AWGiphyGIF] {
+        let url = try generateURL(path: "", params: [
+            "api_key": apiKey,
+            "ids": ids.joined(separator: ","),
+        ])
+        let envelope: GiphyMultiEnvelope = try await performRequest(url: url)
+        return envelope.data
+    }
+
+    func randomGIF(apiKey: String, request: AWGiphyRandomRequest) async throws -> AWGiphyRandomGIF {
+        var params: [String: String] = ["api_key": apiKey]
+        if let tag = request.tag, !tag.isEmpty { params["tag"] = tag }
+        if let rating = request.rating { params["rating"] = rating }
+        let url = try generateURL(path: GiphyEndpoints.randomPath, params: params)
+        let envelope: GiphyRandomEnvelope = try await performRequest(url: url)
+        return envelope.data
+    }
+
     func downloadImageData(from url: URL) async throws -> Data {
         var request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
         request.httpMethod = "GET"

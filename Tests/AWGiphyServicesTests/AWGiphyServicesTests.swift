@@ -87,10 +87,13 @@ private let sampleGIF = """
   "url": "https://giphy.com/gifs/funny-cat-abc123",
   "rating": "g",
   "username": "testuser",
+  "import_datetime": "2021-05-01 12:00:00",
+  "create_datetime": "2021-04-30 10:00:00",
   "images": {
     "fixed_height": {"url": "https://media.giphy.com/media/abc123/200.gif", "mp4": "https://media.giphy.com/media/abc123/200.mp4", "webp": null, "width": "267", "height": "200"},
     "fixed_height_still": {"url": "https://media.giphy.com/media/abc123/200_s.gif", "mp4": null, "webp": null, "width": "267", "height": "200"},
     "fixed_height_small": {"url": "https://media.giphy.com/media/abc123/100.gif", "mp4": null, "webp": null, "width": "133", "height": "100"},
+    "preview": {"url": "https://media.giphy.com/media/abc123/preview.gif", "mp4": "https://media.giphy.com/media/abc123/preview.mp4", "webp": null, "width": "320", "height": "240"},
     "fixed_width": {"url": "https://media.giphy.com/media/abc123/200w.gif", "mp4": null, "webp": null, "width": "200", "height": "150"},
     "fixed_width_still": {"url": "https://media.giphy.com/media/abc123/200w_s.gif", "mp4": null, "webp": null, "width": "200", "height": "150"},
     "original": {"url": "https://media.giphy.com/media/abc123/giphy.gif", "mp4": "https://media.giphy.com/media/abc123/giphy.mp4", "webp": null, "width": "480", "height": "360"},
@@ -123,6 +126,10 @@ final class GiphyEndpointsTests: XCTestCase {
 
     func testTrendingPath() {
         XCTAssertEqual(GiphyEndpoints.trendingPath, "/trending")
+    }
+
+    func testRandomPath() {
+        XCTAssertEqual(GiphyEndpoints.randomPath, "/random")
     }
 }
 
@@ -186,7 +193,83 @@ final class AWGiphyGIFTests: XCTestCase {
         XCTAssertNil(rendition.widthInt)
         XCTAssertNil(rendition.heightInt)
     }
+
+    func testImportDatetimeDecoded() {
+        XCTAssertEqual(gif.importDatetime, "2021-05-01 12:00:00")
+    }
+
+    func testCreateDatetimeDecoded() {
+        XCTAssertEqual(gif.createDatetime, "2021-04-30 10:00:00")
+    }
+
+    func testImportDatetimeNilWhenMissing() throws {
+        let json = """
+        {
+          "id": "x","title": "T","slug": "t","url": "https://giphy.com/gifs/t","rating": "g","username": "",
+          "images": {
+            "fixed_height": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_height_still": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_height_small": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_width": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_width_still": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "original": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "downsized": {"url":null,"mp4":null,"webp":null,"width":null,"height":null}
+          }
+        }
+        """
+        let g = try JSONDecoder().decode(AWGiphyGIF.self, from: json.data(using: .utf8)!)
+        XCTAssertNil(g.importDatetime)
+        XCTAssertNil(g.createDatetime)
+    }
+
+    func testPreviewRenditionDecoded() {
+        XCTAssertEqual(gif.images.preview?.url, "https://media.giphy.com/media/abc123/preview.gif")
+        XCTAssertEqual(gif.images.preview?.mp4, "https://media.giphy.com/media/abc123/preview.mp4")
+    }
+
+    func testPreviewRenditionNilWhenAbsent() throws {
+        let json = """
+        {
+          "id": "x","title": "T","slug": "t","url": "https://giphy.com/gifs/t","rating": "g","username": "",
+          "images": {
+            "fixed_height": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_height_still": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_height_small": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_width": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "fixed_width_still": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "original": {"url":null,"mp4":null,"webp":null,"width":null,"height":null},
+            "downsized": {"url":null,"mp4":null,"webp":null,"width":null,"height":null}
+          }
+        }
+        """
+        let g = try JSONDecoder().decode(AWGiphyGIF.self, from: json.data(using: .utf8)!)
+        XCTAssertNil(g.images.preview)
+    }
+
+    func testDescription() {
+        let description = gif.description
+        XCTAssertTrue(description.contains("abc123"), "description should contain id: \(description)")
+        XCTAssertTrue(description.contains("Funny Cat"), "description should contain title: \(description)")
+    }
 }
+
+private let sampleMultiJSON = """
+{"data": [\(sampleGIF)]}
+"""
+
+private let sampleRandomJSON = """
+{
+  "data": {
+    "id": "rand99",
+    "title": "Random GIF",
+    "rating": "g",
+    "username": "randomuser",
+    "image_url": "https://media.giphy.com/media/rand99/giphy.gif",
+    "image_original_url": "https://media.giphy.com/media/rand99/giphy.gif"
+  },
+  "meta": {"status": 200, "msg": "OK", "response_id": "abc"}
+}
+"""
 
 // MARK: - AWGiphyPaginationTests
 
@@ -226,6 +309,42 @@ final class AWGiphyTrendingRequestTests: XCTestCase {
         XCTAssertEqual(req.limit, 25)
         XCTAssertEqual(req.offset, 0)
         XCTAssertNil(req.rating)
+    }
+}
+
+// MARK: - AWGiphyRandomRequestTests
+
+final class AWGiphyRandomRequestTests: XCTestCase {
+    func testDefaultsAreNil() {
+        let req = AWGiphyRandomRequest()
+        XCTAssertNil(req.tag)
+        XCTAssertNil(req.rating)
+    }
+
+    func testCustomValues() {
+        let req = AWGiphyRandomRequest(tag: "cats", rating: "g")
+        XCTAssertEqual(req.tag, "cats")
+        XCTAssertEqual(req.rating, "g")
+    }
+}
+
+// MARK: - AWGiphyRandomGIFTests
+
+final class AWGiphyRandomGIFTests: XCTestCase {
+    private var gif: AWGiphyRandomGIF!
+
+    override func setUp() {
+        super.setUp()
+        gif = try! JSONDecoder().decode(GiphyRandomEnvelope.self,
+                                       from: sampleRandomJSON.data(using: .utf8)!).data
+    }
+
+    func testIDDecoded() { XCTAssertEqual(gif.id, "rand99") }
+    func testTitleDecoded() { XCTAssertEqual(gif.title, "Random GIF") }
+    func testRatingDecoded() { XCTAssertEqual(gif.rating, "g") }
+    func testUsernameDecoded() { XCTAssertEqual(gif.username, "randomuser") }
+    func testImageURLDecoded() {
+        XCTAssertEqual(gif.imageUrl, "https://media.giphy.com/media/rand99/giphy.gif")
     }
 }
 
@@ -388,6 +507,61 @@ final class GiphyAPIServiceTests: XCTestCase {
         } catch {
             XCTFail("Expected AWGiphyAPIError, got \(error)")
         }
+    }
+
+    // MARK: getGIFs (batch)
+
+    func testGetGIFsByIDsReturnsGIFs() async throws {
+        let service = stub(json: sampleMultiJSON)
+        let gifs = try await service.getGIFs(apiKey: "KEY", ids: ["abc123"])
+        XCTAssertEqual(gifs.count, 1)
+        XCTAssertEqual(gifs[0].id, "abc123")
+    }
+
+    func testGetGIFsByIDsURLContainsIDs() async throws {
+        let service = stub(json: sampleMultiJSON)
+        _ = try await service.getGIFs(apiKey: "KEY", ids: ["abc123", "def456"])
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(url.contains("abc123"), "URL should contain first ID: \(url)")
+        XCTAssertTrue(url.contains("def456"), "URL should contain second ID: \(url)")
+        XCTAssertTrue(url.contains("ids="), "URL should contain ids param: \(url)")
+    }
+
+    func testGetGIFsByIDsURLContainsApiKey() async throws {
+        let service = stub(json: sampleMultiJSON)
+        _ = try await service.getGIFs(apiKey: "BATCHKEY", ids: ["abc123"])
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(url.contains("api_key=BATCHKEY"), "URL should contain api_key: \(url)")
+    }
+
+    // MARK: randomGIF
+
+    func testRandomGIFReturnsGIF() async throws {
+        let service = stub(json: sampleRandomJSON)
+        let gif = try await service.randomGIF(apiKey: "KEY", request: AWGiphyRandomRequest())
+        XCTAssertEqual(gif.id, "rand99")
+        XCTAssertEqual(gif.title, "Random GIF")
+    }
+
+    func testRandomGIFURLContainsRandomPath() async throws {
+        let service = stub(json: sampleRandomJSON)
+        _ = try await service.randomGIF(apiKey: "KEY", request: AWGiphyRandomRequest())
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(url.contains("/random"), "URL should contain /random: \(url)")
+    }
+
+    func testRandomGIFURLContainsTagWhenProvided() async throws {
+        let service = stub(json: sampleRandomJSON)
+        _ = try await service.randomGIF(apiKey: "KEY", request: AWGiphyRandomRequest(tag: "cats"))
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(url.contains("tag=cats"), "URL should contain tag param: \(url)")
+    }
+
+    func testRandomGIFURLOmitsTagWhenNil() async throws {
+        let service = stub(json: sampleRandomJSON)
+        _ = try await service.randomGIF(apiKey: "KEY", request: AWGiphyRandomRequest())
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertFalse(url.contains("tag="), "URL should not contain tag when nil: \(url)")
     }
 }
 

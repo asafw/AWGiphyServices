@@ -131,4 +131,29 @@ final class GiphySearchIntegrationTests: XCTestCase {
         XCTAssertEqual(magic[1], 0x49, "Expected 'I'")
         XCTAssertEqual(magic[2], 0x46, "Expected 'F'")
     }
+
+    func testGetGIFsByIDsReturnsBatch() async throws {
+        let (gifs, _) = try await service.searchGIFs(
+            apiKey: apiKey,
+            request: AWGiphySearchRequest(query: "sunset", limit: 3)
+        )
+        try XCTSkipIf(gifs.isEmpty, "No search results to batch-fetch")
+        let ids = gifs.map(\.id)
+        let batch = try await service.getGIFs(apiKey: apiKey, ids: ids)
+        let batchIDs = Set(batch.map(\.id))
+        for id in ids {
+            XCTAssertTrue(batchIDs.contains(id), "Batch result should contain id \(id)")
+        }
+    }
+
+    func testRandomGIFReturnsGIF() async throws {
+        let gif = try await service.randomGIF(apiKey: apiKey, request: AWGiphyRandomRequest(tag: "cats"))
+        XCTAssertFalse(gif.id.isEmpty, "Random GIF should have a non-empty id")
+        XCTAssertFalse(gif.title.isEmpty, "Random GIF should have a non-empty title")
+    }
+
+    func testRandomGIFNoTagReturnsGIF() async throws {
+        let gif = try await service.randomGIF(apiKey: apiKey, request: AWGiphyRandomRequest())
+        XCTAssertFalse(gif.id.isEmpty, "Random GIF (no tag) should have a non-empty id")
+    }
 }

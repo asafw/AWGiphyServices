@@ -70,6 +70,32 @@ public extension AWGiphyPhotosProtocol {
         try await service.getGIF(apiKey: apiKey, id: id)
     }
 
+    // MARK: - Batch fetch
+
+    /// Fetch metadata for multiple GIFs by their IDs in a single request.
+    ///
+    /// - Parameters:
+    ///   - apiKey: Your Giphy API key.
+    ///   - ids: An array of GIF IDs to fetch (max 10 per request per Giphy docs).
+    /// - Returns: An array of matching `AWGiphyGIF` values (order not guaranteed).
+    /// - Throws: `AWGiphyAPIError`
+    func getGIFs(apiKey: String, ids: [String]) async throws -> [AWGiphyGIF] {
+        try await service.getGIFs(apiKey: apiKey, ids: ids)
+    }
+
+    // MARK: - Random GIF
+
+    /// Fetch a single random GIF, optionally filtered by tag.
+    ///
+    /// - Parameters:
+    ///   - apiKey: Your Giphy API key.
+    ///   - request: Random GIF parameters (optional tag, optional rating).
+    /// - Returns: An `AWGiphyRandomGIF` with direct image URLs.
+    /// - Throws: `AWGiphyAPIError`
+    func randomGIF(apiKey: String, request: AWGiphyRandomRequest = AWGiphyRandomRequest()) async throws -> AWGiphyRandomGIF {
+        try await service.randomGIF(apiKey: apiKey, request: request)
+    }
+
     // MARK: - Image data
 
     /// Download raw image data from a GIF rendition URL.
