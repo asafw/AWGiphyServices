@@ -103,15 +103,58 @@ public enum AWGiphyAPIError: Error, Equatable {
 }
 ```
 
-## Demo app
+## Demo App
 
-Open the package in Xcode and run the **GiphyDemoApp** scheme. Set your API key via:
+A demo app under `Examples/` exercises all four `AWGiphyPhotosProtocol` methods. The same SwiftUI source files run on both macOS and iOS.
+
+### Screenshots
+
+#### iOS
+
+| Empty state | GIF grid | GIF detail |
+|:-----------:|:---------:|:----------:|
+| <img src="screenshots/ios/ios_empty_state.png" width="220"> | <img src="screenshots/ios/ios_gif_grid.png" width="220"> | <img src="screenshots/ios/ios_gif_detail.png" width="220"> |
+
+#### macOS
+
+| GIF grid | GIF detail |
+|:--------:|:----------:|
+| <img src="screenshots/macos/macos_gif_grid.png" width="340"> | <img src="screenshots/macos/macos_gif_detail.png" width="340"> |
+
+### Running on macOS
 
 ```bash
-GIPHY_API_KEY=your_key_here xcodebuild -scheme GiphyDemoApp ...
+# Option 1 — environment variable
+GIPHY_API_KEY=your_api_key swift run GiphyDemoApp
+
+# Option 2 — credential file
+echo "your_api_key" > /tmp/GIPHY_API_KEY
+swift run GiphyDemoApp
 ```
 
-Or paste it into the in-app field at launch.
+### Running on iOS (Simulator)
+
+Requires [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+
+```bash
+cd Examples/GiphyDemoApp-iOS
+xcodegen generate
+open GiphyDemoApp-iOS.xcodeproj
+```
+
+Set `GIPHY_API_KEY` in **Product → Scheme → Edit Scheme → Run → Arguments → Environment Variables**, then build and run.
+
+### Regenerating screenshots
+
+```bash
+# iOS (requires iPhone 16 simulator)
+bash scripts/ios_screenshots.sh
+
+# macOS (requires cliclick: brew install cliclick)
+GIPHY_API_KEY=your_key bash scripts/macos_screenshots.sh
+```
+
+---
 
 ## Testing
 
