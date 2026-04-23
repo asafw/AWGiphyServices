@@ -239,6 +239,13 @@ final class GiphyAPIServiceTests: XCTestCase {
         XCTAssertTrue(url.contains("rating=g"), "URL should contain rating: \(url)")
     }
 
+    func testSearchGIFsURLOmitsRatingWhenNil() async throws {
+        let service = stub(json: sampleListJSON)
+        _ = try await service.searchGIFs(apiKey: "KEY", request: AWGiphySearchRequest(query: "cats"))
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertFalse(url.contains("rating="), "URL should not contain rating when nil: \(url)")
+    }
+
     func testSearchGIFsHTTP500ThrowsAPIError() async {
         let service = stub(json: "", statusCode: 500)
         do {
@@ -311,6 +318,16 @@ final class GiphyAPIServiceTests: XCTestCase {
         _ = try await service.getGIF(apiKey: "KEY", id: "xyz999")
         let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
         XCTAssertTrue(url.contains("xyz999"), "URL should contain GIF ID: \(url)")
+    }
+
+    func testGetGIFIDIsPercentEncoded() async throws {
+        let service = stub(json: sampleSingleJSON)
+        _ = try await service.getGIF(apiKey: "KEY", id: "abc/def")
+        let url = CapturingURLProtocol.lastRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(url.contains("abc%2Fdef") || url.contains("abc/def"),
+                      "Slash in ID should be percent-encoded in path: \(url)")
+        XCTAssertFalse(url.hasSuffix("/def") || url.contains("//def"),
+                       "Raw slash in ID must not produce a second path segment: \(url)")
     }
 
     // MARK: downloadImageData

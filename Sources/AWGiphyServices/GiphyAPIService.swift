@@ -4,7 +4,7 @@ import Foundation
 
 /// Internal service that performs all HTTP calls to the Giphy REST API.
 /// Not part of the public API — consumers interact via `AWGiphyPhotosProtocol`.
-struct GiphyAPIService {
+struct GiphyAPIService: Sendable {
 
     let session: URLSession
 
@@ -40,7 +40,10 @@ struct GiphyAPIService {
     }
 
     func getGIF(apiKey: String, id: String) async throws -> AWGiphyGIF {
-        let url = try generateURL(path: "/\(id)", params: ["api_key": apiKey])
+        guard let encodedID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw AWGiphyAPIError.parsingError
+        }
+        let url = try generateURL(path: "/\(encodedID)", params: ["api_key": apiKey])
         let envelope: GiphySingleEnvelope = try await performRequest(url: url)
         return envelope.data
     }

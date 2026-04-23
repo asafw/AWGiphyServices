@@ -23,7 +23,7 @@ struct GIFGridView: View {
                 if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity)
-                        .gridCellColumns(columns.count)
+                        .gridCellColumns(Int.max)
                         .padding()
                 }
             }

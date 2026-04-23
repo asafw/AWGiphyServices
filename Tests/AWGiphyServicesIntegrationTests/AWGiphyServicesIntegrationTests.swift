@@ -99,7 +99,7 @@ final class GiphySearchIntegrationTests: XCTestCase {
             apiKey: apiKey,
             request: AWGiphySearchRequest(query: "celebrate", limit: 1)
         )
-        guard let first = gifs.first else { return }
+        let first = try XCTUnwrap(gifs.first, "Expected at least one GIF from search")
         let fetched = try await service.getGIF(apiKey: apiKey, id: first.id)
         XCTAssertEqual(fetched.id, first.id)
     }
@@ -109,8 +109,9 @@ final class GiphySearchIntegrationTests: XCTestCase {
             apiKey: apiKey,
             request: AWGiphySearchRequest(query: "fire", limit: 1)
         )
-        guard let urlString = gifs.first?.images.fixedHeightSmall.url,
-              let url = URL(string: urlString) else { return }
+        let gif = try XCTUnwrap(gifs.first, "Expected at least one GIF from search")
+        let urlString = try XCTUnwrap(gif.images.fixedHeightSmall.url, "Expected fixedHeightSmall URL")
+        let url = try XCTUnwrap(URL(string: urlString), "Expected valid URL")
         let data = try await service.downloadImageData(from: url)
         XCTAssertFalse(data.isEmpty, "Downloaded data should not be empty")
     }
@@ -120,8 +121,9 @@ final class GiphySearchIntegrationTests: XCTestCase {
             apiKey: apiKey,
             request: AWGiphySearchRequest(query: "dance", limit: 1)
         )
-        guard let urlString = gifs.first?.images.fixedHeightSmall.url,
-              let url = URL(string: urlString) else { return }
+        let gif = try XCTUnwrap(gifs.first, "Expected at least one GIF from search")
+        let urlString = try XCTUnwrap(gif.images.fixedHeightSmall.url, "Expected fixedHeightSmall URL")
+        let url = try XCTUnwrap(URL(string: urlString), "Expected valid URL")
         let data = try await service.downloadImageData(from: url)
         // GIF89a or GIF87a magic bytes
         let magic = Array(data.prefix(6))
