@@ -41,7 +41,7 @@ echo "▶ Launching (AUTO_SEARCH=cat)…"
 GIPHY_API_KEY="$KEY" AUTO_SEARCH=cat "$APP" &
 APP_PID=$!
 trap 'kill $APP_PID 2>/dev/null; true' EXIT
-sleep 15  # wait for search results + thumbnail downloads
+sleep 20  # wait for search results + thumbnail downloads
 screenshot "macos_search_results"
 
 # 2. Click first GIF cell (approximate centre of first thumbnail)
@@ -51,7 +51,7 @@ CLICK_X=$((WX + 80))
 CLICK_Y=$((WY + 200))
 echo "▶ Clicking first GIF cell at ($CLICK_X, $CLICK_Y)…"
 cliclick c:${CLICK_X},${CLICK_Y}
-sleep 10  # wait for original GIF download
+sleep 20  # wait for original GIF download
 screenshot "macos_gif_detail"
 
 echo "▶ Done."
