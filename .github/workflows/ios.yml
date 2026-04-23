@@ -1,0 +1,31 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', '.github/workflows/ios.yml']
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Pick first available iPhone simulator
+        run: |
+          SIM=$(xcrun simctl list devices available | grep 'iPhone' | head -1 | sed 's/.*(\([A-F0-9-]*\)).*/\1/')
+          echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+          echo "Using simulator: $SIM"
+
+      - name: Run unit tests (iOS)
+        run: |
+          xcodebuild \
+            -scheme AWGiphyServices-Package \
+            -destination "id=$SIM_UDID" \
+            -only-testing:AWGiphyServicesTests \
+            test | tail -20

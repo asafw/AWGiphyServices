@@ -1,0 +1,25 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', '.github/workflows/macos.yml']
+  pull_request:
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', '.github/workflows/macos.yml']
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Run unit tests (macOS)
+        run: |
+          xcodebuild \
+            -scheme AWGiphyServices-Package \
+            -destination "platform=macOS" \
+            -only-testing:AWGiphyServicesTests \
+            test | tail -20
