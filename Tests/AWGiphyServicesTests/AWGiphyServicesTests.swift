@@ -31,6 +31,16 @@ final class CapturingURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
+/// A URLProtocol that always fails with a URLError, simulating no connectivity.
+final class FailingURLProtocol: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+    }
+    override func stopLoading() {}
+}
+
 // MARK: - Test helpers
 
 private func makeSession() -> URLSession {
@@ -137,7 +147,9 @@ final class AWGiphyGIFTests: XCTestCase {
     }
 
     func testIdentifiable() {
-        XCTAssertEqual(gif.id, "abc123")
+        // AWGiphyGIF.id is the Identifiable identifier
+        let gifs = [gif!]
+        XCTAssertEqual(gifs.first(where: { $0.id == "abc123" })?.title, "Funny Cat")
     }
 }
 
@@ -252,6 +264,21 @@ final class GiphyAPIServiceTests: XCTestCase {
             // expected
         } catch {
             XCTFail("Expected parsingError, got \(error)")
+        }
+    }
+
+    func testSearchGIFsURLErrorBecomesNetworkError() async {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [FailingURLProtocol.self]
+        let failSession = URLSession(configuration: config)
+        let service = StubService(urlSession: failSession)
+        do {
+            _ = try await service.searchGIFs(apiKey: "KEY", request: AWGiphySearchRequest(query: "cats"))
+            XCTFail("Expected error")
+        } catch AWGiphyAPIError.networkError {
+            // expected
+        } catch {
+            XCTFail("Expected networkError, got \(error)")
         }
     }
 

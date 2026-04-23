@@ -2,7 +2,8 @@
 
 /// Errors thrown by AWGiphyServices methods.
 public enum AWGiphyAPIError: Error, Equatable {
-    /// The server returned a non-2xx HTTP status code.
+    /// A transport-level error occurred — no connectivity, timeout, DNS failure,
+    /// or the URLSession response was not a valid HTTP response.
     case networkError
     /// The response payload could not be decoded into the expected type.
     case parsingError

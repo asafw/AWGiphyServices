@@ -48,7 +48,12 @@ struct GiphyAPIService {
     func downloadImageData(from url: URL) async throws -> Data {
         var request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
         request.httpMethod = "GET"
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw AWGiphyAPIError.networkError
+        }
         try validateHTTPResponse(response)
         return data
     }
@@ -57,7 +62,12 @@ struct GiphyAPIService {
 
     private func performRequest<T: Decodable>(url: URL) async throws -> T {
         let request = URLRequest(url: url)
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw AWGiphyAPIError.networkError
+        }
         try validateHTTPResponse(response)
         do {
             return try JSONDecoder().decode(T.self, from: data)
