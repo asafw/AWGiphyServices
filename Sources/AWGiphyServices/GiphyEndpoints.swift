@@ -3,8 +3,13 @@
 /// Namespace for Giphy REST API URL constants.
 /// Caseless enum — not intended to be instantiated.
 enum GiphyEndpoints {
-    static let baseURL = "https://api.giphy.com/v1/gifs"
-    static let searchPath = "/search"
+    // All v1 GIF endpoints share this base. Path segments or query parameters
+    // are appended per-endpoint in GiphyAPIService.
+    static let baseURL      = "https://api.giphy.com/v1/gifs"
+    // GET /v1/gifs/search  — keyword search
+    static let searchPath   = "/search"
+    // GET /v1/gifs/trending — editorial trending feed
     static let trendingPath = "/trending"
-    static let randomPath = "/random"
+    // GET /v1/gifs/random  — single random GIF (different response schema: flat URL fields, no `images`)
+    static let randomPath   = "/random"
 }

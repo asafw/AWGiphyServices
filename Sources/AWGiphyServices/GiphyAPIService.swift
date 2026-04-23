@@ -40,6 +40,10 @@ struct GiphyAPIService: Sendable {
     }
 
     func getGIF(apiKey: String, id: String) async throws -> AWGiphyGIF {
+        // Percent-encode the ID before inserting it as a URL path segment.
+        // Without this, characters such as '?', '#', or spaces in an ID
+        // would be misinterpreted as query-string delimiters or fragment
+        // markers, breaking the request URL.
         guard let encodedID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
             throw AWGiphyAPIError.parsingError
         }
@@ -49,6 +53,9 @@ struct GiphyAPIService: Sendable {
     }
 
     func getGIFs(apiKey: String, ids: [String]) async throws -> [AWGiphyGIF] {
+        // The Giphy batch endpoint is the base URL itself (no extra path segment).
+        // IDs are passed as a comma-separated 'ids' query parameter.
+        // Example: GET https://api.giphy.com/v1/gifs?api_key=KEY&ids=abc,def
         let url = try generateURL(path: "", params: [
             "api_key": apiKey,
             "ids": ids.joined(separator: ","),
@@ -59,6 +66,9 @@ struct GiphyAPIService: Sendable {
 
     func randomGIF(apiKey: String, request: AWGiphyRandomRequest) async throws -> AWGiphyRandomGIF {
         var params: [String: String] = ["api_key": apiKey]
+        // Guard against both nil and empty-string tags: callers may pass
+        // AWGiphyRandomRequest(tag: "") to mean "no filter", and sending
+        // tag= to Giphy returns a 400 error.
         if let tag = request.tag, !tag.isEmpty { params["tag"] = tag }
         if let rating = request.rating { params["rating"] = rating }
         let url = try generateURL(path: GiphyEndpoints.randomPath, params: params)
@@ -67,6 +77,10 @@ struct GiphyAPIService: Sendable {
     }
 
     func downloadImageData(from url: URL) async throws -> Data {
+        // Cache-first policy: if the same image URL was already fetched during
+        // this process lifetime, return the cached bytes without a network
+        // round-trip. Giphy rendition URLs are content-addressed and stable,
+        // so serving stale cache data is always correct.
         var request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
         request.httpMethod = "GET"
         let (data, response): (Data, URLResponse)
@@ -81,8 +95,14 @@ struct GiphyAPIService: Sendable {
 
     // MARK: - Private helpers
 
+    // Shared across all requests. JSONDecoder is a class but is not mutated
+    // after creation, so sharing it across concurrent calls is safe and avoids
+    // the small but non-zero per-request allocation cost of creating a new instance.
     private static let decoder = JSONDecoder()
 
+    // Generic request helper — all JSON endpoints go through here.
+    // URLSession errors (no connectivity, timeout, cancelled) are caught and
+    // unified into AWGiphyAPIError.networkError so callers handle one error type.
     private func performRequest<T: Decodable>(url: URL) async throws -> T {
         let request = URLRequest(url: url)
         let (data, response): (Data, URLResponse)
@@ -95,21 +115,33 @@ struct GiphyAPIService: Sendable {
         do {
             return try GiphyAPIService.decoder.decode(T.self, from: data)
         } catch {
+            // Remap Swift's opaque DecodingError into a single typed case so
+            // callers do not need to import or pattern-match Foundation types.
             throw AWGiphyAPIError.parsingError
         }
     }
 
     private func validateHTTPResponse(_ response: URLResponse) throws {
+        // URLSession can theoretically return non-HTTP responses (e.g. file://
+        // schemes used in tests). Casting guards against that defensively;
+        // in production all Giphy requests are HTTPS.
         guard let http = response as? HTTPURLResponse else {
             throw AWGiphyAPIError.networkError
         }
         guard (200...299).contains(http.statusCode) else {
-            throw AWGiphyAPIError.apiError(code: http.statusCode, message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode))
+            throw AWGiphyAPIError.apiError(
+                code: http.statusCode,
+                message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+            )
         }
     }
 
     private func generateURL(path: String, params: [String: String]) throws -> URL {
         let urlString = GiphyEndpoints.baseURL + path
+        // URLComponents is used rather than manual string concatenation because it
+        // correctly percent-encodes query-parameter values that contain spaces,
+        // ampersands, equals signs, or other reserved characters — preventing both
+        // malformed URLs and URL-injection through user-supplied query strings.
         guard let baseURL = URL(string: urlString),
               var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         else {

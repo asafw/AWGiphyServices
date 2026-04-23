@@ -182,20 +182,33 @@ public struct AWGiphyRandomGIF: Decodable, Hashable, Sendable {
 }
 
 // MARK: - Internal envelope types
+//
+// All Giphy REST responses wrap their payload in a top-level `data` key.
+// These private structs model that wrapper so the generic `performRequest<T>`
+// helper can decode it in one pass, then unwrap `.data` before returning to
+// callers. Keeping them internal prevents the envelope structure from leaking
+// into the public API.
 
+// Search and trending responses include a `pagination` object.
 struct GiphyListEnvelope: Decodable {
     let data: [AWGiphyGIF]
     let pagination: AWGiphyPagination
 }
 
+// Single-GIF response (getGIF by ID).
 struct GiphySingleEnvelope: Decodable {
     let data: AWGiphyGIF
 }
 
+// Batch response (getGIFs by IDs). Deliberately distinct from GiphyListEnvelope
+// because the batch endpoint does NOT include a `pagination` object.
 struct GiphyMultiEnvelope: Decodable {
     let data: [AWGiphyGIF]
 }
 
+// Random-GIF response. Uses AWGiphyRandomGIF rather than AWGiphyGIF because
+// the /random endpoint returns a different JSON schema (flat URL fields instead
+// of the `images` object that all other endpoints provide).
 struct GiphyRandomEnvelope: Decodable {
     let data: AWGiphyRandomGIF
 }

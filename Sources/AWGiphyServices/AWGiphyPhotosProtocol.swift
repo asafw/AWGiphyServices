@@ -29,6 +29,9 @@ public extension AWGiphyPhotosProtocol {
 
     var urlSession: URLSession { .shared }
 
+    // Computed (not stored) so it always picks up the current urlSession value.
+    // GiphyAPIService is a lightweight struct that holds only a URLSession
+    // reference, so constructing one per call has negligible cost.
     private var service: GiphyAPIService { GiphyAPIService(session: urlSession) }
 
     // MARK: - Search
