@@ -101,15 +101,8 @@ struct GIFDetailView: View {
 
     // MARK: - Platform image helper
 
-    #if canImport(UIKit)
     private func platformImage(from data: Data) -> Image? {
-        guard let ui = UIImage(data: data) else { return nil }
-        return Image(uiImage: ui)
+        guard let img = PlatformImage(data: data) else { return nil }
+        return Image(platformImage: img)
     }
-    #elseif canImport(AppKit)
-    private func platformImage(from data: Data) -> Image? {
-        guard let ns = NSImage(data: data) else { return nil }
-        return Image(nsImage: ns)
-    }
-    #endif
 }

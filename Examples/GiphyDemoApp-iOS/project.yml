@@ -1,0 +1,46 @@
+name: GiphyDemoApp-iOS
+
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+
+# Local reference to the AWGiphyServices package (two levels up from this file)
+packages:
+  AWGiphyServices:
+    path: ../..
+
+targets:
+  GiphyDemoApp-iOS:
+    type: application
+    platform: iOS
+    # Share source files with the macOS SPM executable target — no duplication.
+    sources:
+      - path: ../GiphyDemoApp
+    dependencies:
+      - package: AWGiphyServices
+        product: AWGiphyServices
+    settings:
+      base:
+        SWIFT_VERSION: 5.9
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.giphydemo
+        PRODUCT_NAME: Giphy Demo
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1"
+
+  GiphyDemoScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Screenshots
+    settings:
+      base:
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.giphydemo.screenshots
+        TEST_TARGET_NAME: GiphyDemoApp-iOS
+    dependencies:
+      - target: GiphyDemoApp-iOS
