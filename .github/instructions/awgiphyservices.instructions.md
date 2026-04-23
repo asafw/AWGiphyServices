@@ -34,7 +34,7 @@ AWGiphyServices/
 │   ├── AWGiphyPhotosProtocol.swift ← Public protocol + mixin defaults
 │   └── AWGiphyService.swift        ← Concrete conforming type
 ├── Tests/AWGiphyServicesTests/
-│   └── AWGiphyServicesTests.swift  ← 40 unit tests (8 suites, CapturingURLProtocol)
+│   └── AWGiphyServicesTests.swift  ← 41 unit tests (8 suites, CapturingURLProtocol)
 ├── Tests/AWGiphyServicesIntegrationTests/
 │   └── AWGiphyServicesIntegrationTests.swift  ← 9 live tests; skip without key
 ├── Examples/GiphyDemoApp/          ← SwiftUI demo app (macOS + iOS)
