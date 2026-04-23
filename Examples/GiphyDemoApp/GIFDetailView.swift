@@ -6,7 +6,6 @@ import AWGiphyServices
 struct GIFDetailView: View {
 
     let gif: AWGiphyGIF
-    var viewModel: DemoViewModel
 
     @State private var imageData: Data? = nil
     @Environment(\.dismiss) private var dismiss
@@ -80,9 +79,11 @@ struct GIFDetailView: View {
             }
             infoRow(label: "Rating", value: gif.rating.uppercased())
 
-            Link("View on Giphy", destination: URL(string: gif.url)!)
-                .font(.subheadline)
-                .padding(.top, 4)
+            if let url = URL(string: gif.url) {
+                Link("View on Giphy", destination: url)
+                    .font(.subheadline)
+                    .padding(.top, 4)
+            }
 
             Spacer()
         }

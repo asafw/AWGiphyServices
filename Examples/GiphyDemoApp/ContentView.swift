@@ -24,7 +24,7 @@ struct ContentView: View {
             }
         }
         .sheet(item: $viewModel.selectedGIF) { gif in
-            GIFDetailView(gif: gif, viewModel: viewModel)
+            GIFDetailView(gif: gif)
         }
     }
 

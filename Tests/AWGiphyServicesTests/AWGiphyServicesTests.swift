@@ -239,7 +239,7 @@ final class GiphyAPIServiceTests: XCTestCase {
         XCTAssertTrue(url.contains("rating=g"), "URL should contain rating: \(url)")
     }
 
-    func testSearchGIFsNetworkErrorThrows() async {
+    func testSearchGIFsHTTP500ThrowsAPIError() async {
         let service = stub(json: "", statusCode: 500)
         do {
             _ = try await service.searchGIFs(apiKey: "KEY", request: AWGiphySearchRequest(query: "cats"))
