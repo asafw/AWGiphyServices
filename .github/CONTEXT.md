@@ -62,6 +62,8 @@ Default `urlSession` is `URLSession.shared`. Override to inject a custom session
 | `searchGIFs(apiKey:request:)` | No | `async throws -> ([AWGiphyGIF], AWGiphyPagination)` |
 | `trendingGIFs(apiKey:request:)` | No | `async throws -> ([AWGiphyGIF], AWGiphyPagination)` |
 | `getGIF(apiKey:id:)` | No | `async throws -> AWGiphyGIF` |
+| `getGIFs(apiKey:ids:)` | No | `async throws -> [AWGiphyGIF]` |
+| `randomGIF(apiKey:request:)` | No | `async throws -> AWGiphyRandomGIF` |
 | `downloadImageData(from:)` | No | `async throws -> Data` |
 
 ### `AWGiphyService`
@@ -77,34 +79,38 @@ public final class AWGiphyService: AWGiphyPhotosProtocol {
 
 | Type | Key fields |
 |---|---|
-| `AWGiphyGIF` | `id, title, slug, url, rating, username, images: AWGiphyImages` |
-| `AWGiphyImages` | `fixedHeight, fixedHeightStill, fixedHeightSmall, fixedWidth, fixedWidthStill, original, downsized` (all `AWGiphyRendition`) |
-| `AWGiphyRendition` | `url?, mp4?, webp?, width?, height?` (all optional strings) |
+| `AWGiphyGIF` | `id, title, slug, url, rating, username, images: AWGiphyImages, importDatetime: String?, createDatetime: String?`; conforms to `Decodable, Hashable, Identifiable, Sendable, CustomStringConvertible` |
+| `AWGiphyImages` | `fixedHeight, fixedHeightStill, fixedHeightSmall, preview?, fixedWidth, fixedWidthStill, original, downsized` (all `AWGiphyRendition`) |
+| `AWGiphyRendition` | `url?, mp4?, webp?, width?, height?` (all optional strings); `widthInt`, `heightInt` computed |
 | `AWGiphyPagination` | `count, offset, totalCount?` |
 | `AWGiphySearchRequest` | `query: String`, `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
 | `AWGiphyTrendingRequest` | `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
+| `AWGiphyRandomRequest` | `tag: String?`, `rating: String?` |
+| `AWGiphyRandomGIF` | `id, title, rating, username, imageUrl?, imageOriginalUrl?`; returned by `/v1/gifs/random` (no `images` object) |
 | `AWGiphyAPIError` | `.networkError`, `.parsingError`, `.apiError(code: Int, message: String)` |
 
 ---
 
 ## Test counts
 
-- Unit tests: 41 (across 8 suites)
-- Integration tests: 9 (skipped when GIPHY_API_KEY absent or CI env set)
+- Unit tests: 72 (across 11 suites)
+- Integration tests: 12 (skipped when GIPHY_API_KEY absent or CI env set)
 
 ### Unit test suites
 
 | Suite | Count |
 |---|---|
-| `GiphyEndpointsTests` | 3 |
-| `AWGiphyGIFTests` | 11 |
+| `GiphyEndpointsTests` | 4 |
+| `AWGiphyGIFTests` | 19 |
 | `AWGiphyPaginationTests` | 1 |
 | `AWGiphySearchRequestTests` | 2 |
 | `AWGiphyTrendingRequestTests` | 1 |
-| `GiphyAPIServiceTests` | 14 |
+| `AWGiphyRandomRequestTests` | 2 |
+| `AWGiphyRandomGIFTests` | 5 |
+| `GiphyAPIServiceTests` | 23 |
 | `AWGiphyPhotosProtocolTests` | 2 |
 | `AWGiphyServiceTests` | 3 |
-| `AWGiphyAPIErrorTests` | 4 |
+| `AWGiphyAPIErrorTests` | 9 |
 
 ---
 
@@ -129,6 +135,9 @@ xcodebuild -scheme AWGiphyServices-Package -destination "platform=macOS" test
 
 | Hash | Message |
 |---|---|
-| 26b28ec | fix: catch URLError as networkError; fix networkError doc comment; improve tests |
-| 19c65c4 | docs(context): update session state |
-| 5d4b1bb | feat: initial AWGiphyServices package |
+| f8073e5 | docs: add inline reasoning comments to all non-trivial internals |
+| 7886084 | feat: add getGIFs(ids:), randomGIF, preview rendition, dates, CustomStringConvertible |
+| 4a8c696 | feat: improve macOS screenshot wait times; real GIF loaded in detail |
+| bc1056c | feat: real macOS screenshots (cat search); remove stale macos_gif_grid |
+| d2a0f11 | feat: real-API screenshots (cat search); keyboard dismiss fix; AUTO_SEARCH seam |
+| c10394f | docs: add screenshot section to README; add iOS/macOS demo app screenshots |

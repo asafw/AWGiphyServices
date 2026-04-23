@@ -63,13 +63,15 @@ public protocol AWGiphyPhotosProtocol {
 }
 ```
 
-All four methods are declared in the protocol and fully implemented in a `public extension`.
+All methods are declared in the protocol and fully implemented in a `public extension`.
 
 | Method | Signature |
 |---|---|
 | `searchGIFs(apiKey:request:)` | `async throws -> ([AWGiphyGIF], AWGiphyPagination)` |
 | `trendingGIFs(apiKey:request:)` | `async throws -> ([AWGiphyGIF], AWGiphyPagination)` |
 | `getGIF(apiKey:id:)` | `async throws -> AWGiphyGIF` |
+| `getGIFs(apiKey:ids:)` | `async throws -> [AWGiphyGIF]` |
+| `randomGIF(apiKey:request:)` | `async throws -> AWGiphyRandomGIF` |
 | `downloadImageData(from:)` | `async throws -> Data` |
 
 ### `AWGiphyService`
@@ -85,20 +87,24 @@ public final class AWGiphyService: AWGiphyPhotosProtocol {
 
 | Type | Key fields / notes |
 |---|---|
-| `AWGiphyGIF` | `id, title, slug, url, rating, username, images`; conforms to `Decodable, Hashable, Identifiable, Sendable` |
-| `AWGiphyImages` | `fixedHeight, fixedHeightStill, fixedHeightSmall, fixedWidth, fixedWidthStill, original, downsized` (all `AWGiphyRendition`); CodingKeys map `fixed_height` etc. |
-| `AWGiphyRendition` | `url?, mp4?, webp?, width?, height?` (all optional strings); conforms to `Decodable, Hashable, Sendable` |
+| `AWGiphyGIF` | `id, title, slug, url, rating, username, images, importDatetime?, createDatetime?`; conforms to `Decodable, Hashable, Identifiable, Sendable, CustomStringConvertible`; CodingKeys map snake_case fields |
+| `AWGiphyImages` | `fixedHeight, fixedHeightStill, fixedHeightSmall, preview?, fixedWidth, fixedWidthStill, original, downsized` (all `AWGiphyRendition`); `preview` is optional |
+| `AWGiphyRendition` | `url?, mp4?, webp?, width?, height?` (all optional strings); `widthInt`, `heightInt` computed via `flatMap(Int.init)` |
 | `AWGiphyPagination` | `count, offset, totalCount?`; CodingKey `total_count → totalCount` |
 | `AWGiphySearchRequest` | `query: String`, `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
 | `AWGiphyTrendingRequest` | `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
-| `AWGiphyAPIError` | `.networkError`, `.parsingError`, `.apiError(code: Int, message: String)`; conforms to `Error, Equatable` |
+| `AWGiphyRandomRequest` | `tag: String?`, `rating: String?` — both default nil |
+| `AWGiphyRandomGIF` | `id, title, rating, username, imageUrl?, imageOriginalUrl?`; returned by `/v1/gifs/random` which has a different schema (flat URL fields, no `images` object) |
+| `AWGiphyAPIError` | `.networkError`, `.parsingError`, `.apiError(code: Int, message: String)`; conforms to `Error, Equatable, LocalizedError` |
 
 ### Internal types (do not expose publicly)
 
-- `GiphyAPIService` — `struct`; `init(session:)`; URL building via `URLComponents`; `performRequest<T: Decodable>` delegates to this
-- `GiphyEndpoints` — caseless `enum`; all URL string constants
-- `GiphyListEnvelope` — `Decodable`; `data: [AWGiphyGIF]`, `pagination: AWGiphyPagination`
-- `GiphySingleEnvelope` — `Decodable`; `data: AWGiphyGIF`
+- `GiphyAPIService` — `struct`; `init(session:)`; URL building via `URLComponents`; `static let decoder` shared across requests; `performRequest<T: Decodable>` generic helper for all JSON endpoints
+- `GiphyEndpoints` — caseless `enum`; all URL string constants (`baseURL`, `searchPath`, `trendingPath`, `randomPath`)
+- `GiphyListEnvelope` — `Decodable`; `data: [AWGiphyGIF]`, `pagination: AWGiphyPagination` (search + trending)
+- `GiphySingleEnvelope` — `Decodable`; `data: AWGiphyGIF` (getGIF by ID)
+- `GiphyMultiEnvelope` — `Decodable`; `data: [AWGiphyGIF]` (batch — no pagination object)
+- `GiphyRandomEnvelope` — `Decodable`; `data: AWGiphyRandomGIF` (random endpoint)
 
 ---
 
@@ -121,9 +127,12 @@ public final class AWGiphyService: AWGiphyPhotosProtocol {
 - **No imports** — source files use only `Foundation`. No `UIKit`, no `AppKit`.
 - **`AW` prefix** — all public types are prefixed `AW` (`AWGiphyGIF`, `AWGiphyService`, etc.).
 - **Doc comments** — every `public` type and method must have a `///` doc comment.
-- **Tests** — every new public method must have a unit test using `CapturingURLProtocol` and an integration test in `AWGiphyServicesIntegrationTests`.
+- **Inline reasoning comments** — all non-obvious internal decisions must have `//` comments explaining *why* (not just *what*). See `GiphyAPIService.swift` for examples.
+- **Tests** — every new public method must have unit tests (URL shape, decode, error cases) using `CapturingURLProtocol` and an integration test in `AWGiphyServicesIntegrationTests`.
 - **Integration test credentials** — read from `GIPHY_API_KEY` env var or `/tmp/GIPHY_API_KEY` via `readCredential(_:)`; skip with `XCTSkipIf`/`XCTSkip` when absent. Never hardcode.
 - **`@discardableResult` not needed** — the API is pure `async throws`.
+- **`URLComponents` for URL building** — never string-concatenate query parameters; always use `URLQueryItem`.
+- **Empty-string guards** — treat `""` the same as `nil` for optional filter parameters (e.g. `tag`) to avoid sending `tag=` to the API.
 
 ---
 

@@ -11,6 +11,8 @@ A dependency-free Swift Package for integrating the [Giphy API](https://develope
 - **GIF search** — query with limit, offset, and content rating
 - **Trending GIFs** — fetch the current trending feed
 - **Fetch by ID** — retrieve a single GIF
+- **Batch fetch** — retrieve multiple GIFs by ID in one request
+- **Random GIF** — fetch a random GIF, optionally filtered by tag
 - **Image download** — download raw GIF/WebP/MP4 data
 - **Protocol mixin pattern** — conform to `AWGiphyPhotosProtocol` and get all functionality for free; no subclassing or object injection required
 
@@ -45,6 +47,15 @@ let (trending, _) = try await service.trendingGIFs(
 // Fetch by ID
 let gif = try await service.getGIF(apiKey: "YOUR_API_KEY", id: "abc123")
 
+// Batch fetch
+let batch = try await service.getGIFs(apiKey: "YOUR_API_KEY", ids: ["abc123", "def456"])
+
+// Random GIF (optionally filtered by tag)
+let random = try await service.randomGIF(
+    apiKey: "YOUR_API_KEY",
+    request: AWGiphyRandomRequest(tag: "cats")
+)
+
 // Download image data
 let data = try await service.downloadImageData(from: URL(string: gif.images.fixedHeight.url!)!)
 ```
@@ -75,6 +86,8 @@ let (gifs, _) = try await viewModel.searchGIFs(apiKey: key, request: req)
 | `searchGIFs(apiKey:request:)` | Search for GIFs by keyword |
 | `trendingGIFs(apiKey:request:)` | Fetch the trending GIF feed |
 | `getGIF(apiKey:id:)` | Fetch a single GIF by ID |
+| `getGIFs(apiKey:ids:)` | Batch-fetch multiple GIFs by ID |
+| `randomGIF(apiKey:request:)` | Fetch a single random GIF |
 | `downloadImageData(from:)` | Download raw bytes from a GIF URL |
 
 ### Request types
@@ -83,14 +96,16 @@ let (gifs, _) = try await viewModel.searchGIFs(apiKey: key, request: req)
 |---|---|
 | `AWGiphySearchRequest` | `query: String`, `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
 | `AWGiphyTrendingRequest` | `limit: Int = 25`, `offset: Int = 0`, `rating: String?` |
+| `AWGiphyRandomRequest` | `tag: String?`, `rating: String?` |
 
 ### Response types
 
 | Type | Key properties |
 |---|---|
-| `AWGiphyGIF` | `id`, `title`, `slug`, `url`, `rating`, `username`, `images: AWGiphyImages` |
-| `AWGiphyImages` | `fixedHeight`, `fixedHeightSmall`, `fixedWidth`, `original`, `downsized` (all `AWGiphyRendition`) |
-| `AWGiphyRendition` | `url?`, `mp4?`, `webp?`, `width?`, `height?` |
+| `AWGiphyGIF` | `id`, `title`, `slug`, `url`, `rating`, `username`, `images: AWGiphyImages`, `importDatetime?`, `createDatetime?` |
+| `AWGiphyRandomGIF` | `id`, `title`, `rating`, `username`, `imageUrl?`, `imageOriginalUrl?` |
+| `AWGiphyImages` | `fixedHeight`, `fixedHeightSmall`, `preview?`, `fixedWidth`, `original`, `downsized` (all `AWGiphyRendition`) |
+| `AWGiphyRendition` | `url?`, `mp4?`, `webp?`, `width?`, `height?`; `widthInt`, `heightInt` computed |
 | `AWGiphyPagination` | `count`, `offset`, `totalCount?` |
 
 ### Errors
