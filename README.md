@@ -1,5 +1,9 @@
 # AWGiphyServices
 
+[![iOS CI](https://github.com/asafw/AWGiphyServices/actions/workflows/ios.yml/badge.svg)](https://github.com/asafw/AWGiphyServices/actions/workflows/ios.yml)
+[![macOS CI](https://github.com/asafw/AWGiphyServices/actions/workflows/macos.yml/badge.svg)](https://github.com/asafw/AWGiphyServices/actions/workflows/macos.yml)
+[![Swift CI](https://github.com/asafw/AWGiphyServices/actions/workflows/swift.yml/badge.svg)](https://github.com/asafw/AWGiphyServices/actions/workflows/swift.yml)
+
 A dependency-free Swift Package for integrating the [Giphy API](https://developers.giphy.com/) in iOS and macOS apps.
 
 **iOS 17+ · macOS 14+ · Swift Package**
